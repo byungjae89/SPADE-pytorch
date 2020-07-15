@@ -1,0 +1,5 @@
+torch
+torchvision
+sklearn
+matplotlib
+wget
