@@ -18,6 +18,9 @@ Install prerequisites with:
 pip install -r requirements.txt
 ```
 
+If you already download [`MVTec AD`](https://www.mvtec.com/company/research/datasets/mvtec-ad/) dataset, move a file to `data/mvtec_anomaly_detection.tar.xz`.  
+If you don't have a dataset file, it will be automatically downloaded during the code running.
+
 ## Usage
 
 To test **SPADE** on `MVTec AD` dataset:
