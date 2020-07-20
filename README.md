@@ -80,3 +80,35 @@ Below is the implementation result of the test set ROCAUC on the `MVTec AD` data
 ### ROC Curve 
 
 ![roc](./assets/roc_curve.png)
+
+### Localization results  
+
+![bottle](./assets/bottle_000.png)  
+![cable](./assets/cable_000.png)  
+![capsule](./assets/capsule_000.png)  
+![carpet](./assets/carpet_000.png)  
+![grid](./assets/grid_000.png)  
+![hazelnut](./assets/hazelnut_000.png)  
+![leather](./assets/leather_000.png)  
+![metal_nut](./assets/metal_nut_000.png)  
+![pill](./assets/pill_000.png)  
+![screw](./assets/screw_000.png)  
+![tile](./assets/tile_000.png)  
+![toothbrush](./assets/toothbrush_000.png)  
+![transistor](./assets/transistor_000.png)  
+![wood](./assets/wood_000.png)  
+![zipper](./assets/zipper_000.png)  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
