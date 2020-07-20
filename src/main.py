@@ -4,7 +4,9 @@ import os
 import pickle
 from tqdm import tqdm
 from collections import OrderedDict
-from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve
+from sklearn.metrics import precision_recall_curve
 from scipy.ndimage import gaussian_filter
 import matplotlib.pyplot as plt
 
@@ -62,8 +64,6 @@ def main():
 
         train_outputs = OrderedDict([('layer1', []), ('layer2', []), ('layer3', []), ('avgpool', [])])
         test_outputs = OrderedDict([('layer1', []), ('layer2', []), ('layer3', []), ('avgpool', [])])
-        gt_list = []
-        gt_mask_list = []
 
         # extract train set features
         train_feature_filepath = os.path.join(args.save_path, 'temp', 'train_%s.pkl' % class_name)
@@ -87,8 +87,13 @@ def main():
             with open(train_feature_filepath, 'rb') as f:
                 train_outputs = pickle.load(f)
 
+        gt_list = []
+        gt_mask_list = []
+        test_imgs = []
+
         # extract test set features
         for (x, y, mask) in tqdm(test_dataloader, '| feature extraction | test | %s |' % class_name):
+            test_imgs.extend(x.cpu().detach().numpy())
             gt_list.extend(y.cpu().detach().numpy())
             gt_mask_list.extend(mask.cpu().detach().numpy())
             # model prediction
@@ -157,6 +162,16 @@ def main():
         print('%s pixel ROCAUC: %.3f' % (class_name, per_pixel_rocauc))
         fig_pixel_rocauc.plot(fpr, tpr, label='%s ROCAUC: %.3f' % (class_name, per_pixel_rocauc))
 
+        # get optimal threshold
+        precision, recall, thresholds = precision_recall_curve(flatten_gt_mask_list, flatten_score_map_list)
+        a = 2 * precision * recall
+        b = precision + recall
+        f1 = np.divide(a, b, out=np.zeros_like(a), where=b != 0)
+        threshold = thresholds[np.argmax(f1)]
+
+        # visualize localization result
+        visualize_loc_result(test_imgs, gt_mask_list, score_map_list, threshold, args.save_path, class_name, vis_num=5)
+
     print('Average ROCAUC: %.3f' % np.mean(total_roc_auc))
     fig_img_rocauc.title.set_text('Average image ROCAUC: %.3f' % np.mean(total_roc_auc))
     fig_img_rocauc.legend(loc="lower right")
@@ -178,6 +193,48 @@ def calc_dist_matrix(x, y):
     y = y.unsqueeze(0).expand(n, m, d)
     dist_matrix = torch.sqrt(torch.pow(x - y, 2).sum(2))
     return dist_matrix
+
+
+def visualize_loc_result(test_imgs, gt_mask_list, score_map_list, threshold,
+                         save_path, class_name, vis_num=5):
+
+    for t_idx in range(vis_num):
+        test_img = test_imgs[t_idx]
+        test_img = denormalization(test_img)
+        test_gt = gt_mask_list[t_idx].transpose(1, 2, 0).squeeze()
+        test_pred = score_map_list[t_idx]
+        test_pred[test_pred <= threshold] = 0
+        test_pred[test_pred > threshold] = 1
+        test_pred_img = test_img.copy()
+        test_pred_img[test_pred == 0] = 0
+
+        fig_img, ax_img = plt.subplots(1, 4, figsize=(12, 4))
+        fig_img.subplots_adjust(left=0, right=1, bottom=0, top=1)
+
+        for ax_i in ax_img:
+            ax_i.axes.xaxis.set_visible(False)
+            ax_i.axes.yaxis.set_visible(False)
+
+        ax_img[0].imshow(test_img)
+        ax_img[0].title.set_text('Image')
+        ax_img[1].imshow(test_gt, cmap='gray')
+        ax_img[1].title.set_text('GroundTruth')
+        ax_img[2].imshow(test_pred, cmap='gray')
+        ax_img[2].title.set_text('Predicted mask')
+        ax_img[3].imshow(test_pred_img)
+        ax_img[3].title.set_text('Predicted anomalous image')
+
+        os.makedirs(os.path.join(save_path, 'images'), exist_ok=True)
+        fig_img.savefig(os.path.join(save_path, 'images', '%s_%03d.png' % (class_name, t_idx)), dpi=100)
+        fig_img.clf()
+        plt.close(fig_img)
+
+
+def denormalization(x):
+    mean = np.array([0.485, 0.456, 0.406])
+    std = np.array([0.229, 0.224, 0.225])
+    x = (((x.transpose(1, 2, 0) * std) + mean) * 255.).astype(np.uint8)
+    return x
 
 
 if __name__ == '__main__':
