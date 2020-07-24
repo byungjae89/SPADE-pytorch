@@ -1,8 +1,8 @@
 import os
-import wget
 import tarfile
-import numpy as np
 from PIL import Image
+from tqdm import tqdm
+import urllib.request
 
 import torch
 from torch.utils.data import Dataset
@@ -100,11 +100,22 @@ class MVTecDataset(Dataset):
         if not os.path.exists(self.mvtec_folder_path):
             tar_file_path = self.mvtec_folder_path + '.tar.xz'
             if not os.path.exists(tar_file_path):
-                print('Download MVTec AD dataset from MVTec ftp server')
-                wget.download(URL, tar_file_path)
+                download_url(URL, tar_file_path)
             print('unzip downloaded dataset: %s' % tar_file_path)
             tar = tarfile.open(tar_file_path, 'r:xz')
             tar.extractall(self.mvtec_folder_path)
             tar.close()
 
         return
+
+
+class DownloadProgressBar(tqdm):
+    def update_to(self, b=1, bsize=1, tsize=None):
+        if tsize is not None:
+            self.total = tsize
+        self.update(b * bsize - self.n)
+
+
+def download_url(url, output_path):
+    with DownloadProgressBar(unit='B', unit_scale=True, miniters=1, desc=url.split('/')[-1]) as t:
+        urllib.request.urlretrieve(url, filename=output_path, reporthook=t.update_to)
