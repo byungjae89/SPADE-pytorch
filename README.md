@@ -11,7 +11,7 @@ It is fast, robust and achieves SOTA on `MVTec AD` dataset.
 ## Prerequisites
 * python 3.6+
 * PyTorch 1.5+
-* sklearn, matplotlib, wget
+* sklearn, matplotlib
 
 Install prerequisites with:  
 ```
