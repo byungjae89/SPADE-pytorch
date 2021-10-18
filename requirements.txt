@@ -2,3 +2,4 @@ torch
 torchvision
 sklearn
 matplotlib
+tqdm
