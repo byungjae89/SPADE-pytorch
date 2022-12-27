@@ -134,7 +134,7 @@ def main():
 
                 # calculate distance matrix
                 dist_matrix_list = []
-                for d_idx in range(feat_gallery.shape[0] // 100):
+                for d_idx in range(feat_gallery.shape[0] // 100 + 1):
                     dist_matrix = torch.pairwise_distance(feat_gallery[d_idx * 100:d_idx * 100 + 100], test_feat_map)
                     dist_matrix_list.append(dist_matrix)
                 dist_matrix = torch.cat(dist_matrix_list, 0)
