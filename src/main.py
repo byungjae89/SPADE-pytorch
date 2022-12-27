@@ -130,7 +130,12 @@ def main():
                 # construct a gallery of features at all pixel locations of the K nearest neighbors
                 topk_feat_map = train_outputs[layer_name][topk_indexes[t_idx]]
                 test_feat_map = test_outputs[layer_name][t_idx:t_idx + 1]
-                feat_gallery = topk_feat_map.transpose(3, 1).flatten(0, 2).unsqueeze(-1).unsqueeze(-1)
+
+                # adjust dimensions to measure distance in the channel dimension for all combinations
+                feat_gallery = topk_feat_map.transpose(1, 2).transpose(2, 3)   # (K, C, H, W) -> (K, H, W, C)
+                feat_gallery = feat_gallery.flatten(0, 2)                      # (K, H, W, C) -> (KHW, C)
+                feat_gallery = feat_gallery.unsqueeze(1).unsqueeze(1)          # (KHW, C) -> (KHW, 1, 1, C)
+                test_feat_map = test_feat_map.transpose(1, 2).transpose(2, 3)  # (K, C, H, W) -> (K, H, W, C)
 
                 # calculate distance matrix
                 dist_matrix_list = []
